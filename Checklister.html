@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checklist App</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --border: #d9dfeb;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --done: #edfdf3;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      --radius: 16px;
+      --gap: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      min-height: 100vh;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+    }
+
+    .topbar {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    button, select {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    button:hover, select:hover {
+      border-color: #b8c3d9;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap);
+      min-height: 0;
+      flex: 1;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      min-height: 70vh;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .panel-note {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .editor-wrap {
+      flex: 1;
+      padding: 0;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100%;
+      min-height: 70vh;
+      border: 0;
+      outline: 0;
+      resize: none;
+      padding: 16px;
+      font-size: 16px;
+      line-height: 1.6;
+      background: transparent;
+      color: var(--text);
+      font-family: Arial, sans-serif;
+    }
+
+    .preview-wrap {
+      padding: 8px 10px 14px;
+      overflow: auto;
+      flex: 1;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 20px 12px;
+      font-size: 15px;
+    }
+
+    .item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: start;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 8px 0;
+      background: #fff;
+    }
+
+    .item.done {
+      background: var(--done);
+    }
+
+    .checkbox {
+      margin-top: 2px;
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .item-text {
+      font-size: 16px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .item.done .item-text {
+      text-decoration: line-through;
+      color: #3f4b5d;
+    }
+
+    .timestamp {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      align-self: center;
+    }
+
+    .stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dir-auto {
+      direction: auto;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        min-height: 42vh;
+      }
+
+      textarea {
+        min-height: 42vh;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .item {
+        grid-template-columns: auto 1fr;
+      }
+
+      .timestamp {
+        grid-column: 2;
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div>
+        <div class="title">Checklist</div>
+        <div class="subtitle">עריכה בחלון אחד, תצוגה ותיעוד עדכון בחלון המקביל</div>
+      </div>
+      <div class="controls">
+        <select id="appDirection" aria-label="Direction mode">
+          <option value="auto">Auto direction</option>
+          <option value="rtl">RTL</option>
+          <option value="ltr">LTR</option>
+        </select>
+        <button id="clearChecksBtn">Clear checks</button>
+        <button id="resetBtn">Reset all</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Editor</div>
+            <div class="panel-note">כל שורה היא פריט אחד בצ'קליסט</div>
+          </div>
+          <div class="stats" id="editorStats"></div>
+        </div>
+        <div class="editor-wrap">
+          <textarea id="editor" placeholder="לדוגמה:
+לקנות חלב
+לקבוע פגישה
+Send invoice
+Call supplier"></textarea>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Preview</div>
+            <div class="panel-note">סימון פריט יעדכן את זמן העדכון האחרון של אותה שורה</div>
+          </div>
+          <div class="stats" id="previewStats"></div>
+        </div>
+        <div class="preview-wrap" id="preview"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'simpleChecklistApp.v1';
+
+    const editor = document.getElementById('editor');
+    const preview = document.getElementById('preview');
+    const editorStats = document.getElementById('editorStats');
+    const previewStats = document.getElementById('previewStats');
+    const appDirection = document.getElementById('appDirection');
+    const clearChecksBtn = document.getElementById('clearChecksBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let state = {
+      rawText: '',
+      items: [],
+      direction: 'auto'
+    };
+
+    function makeId() {
+      if (window.crypto && crypto.randomUUID) {
+        return crypto.randomUUID();
+      }
+      return 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+    }
+
+    function splitLines(rawText) {
+      return rawText
+        .replace(/\r\n/g, '\n')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line !== '');
+    }
+
+    function parseItems(rawText, existingItems) {
+      const lines = splitLines(rawText);
+      const used = new Set();
+
+      return lines.map(text => {
+        const matchIndex = existingItems.findIndex((item, index) => !used.has(index) && item.text === text);
+
+        if (matchIndex >= 0) {
+          used.add(matchIndex);
+          return {
+            ...existingItems[matchIndex],
+            text
+          };
+        }
+
+        return {
+          id: makeId(),
+          text,
+          done: false,
+          updatedAt: null
+        };
+      });
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (!saved) {
+          return;
+        }
+        state.rawText = typeof saved.rawText === 'string' ? saved.rawText : '';
+        state.items = Array.isArray(saved.items) ? saved.items : [];
+        state.direction = ['auto', 'rtl', 'ltr'].includes(saved.direction) ? saved.direction : 'auto';
+      } catch {
+      }
+    }
+
+    function formatTimestamp(value) {
+      if (!value) {
+        return 'טרם עודכן';
+      }
+
+      try {
+        const date = new Date(value);
+        return new Intl.DateTimeFormat(undefined, {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }).format(date);
+      } catch {
+        return value;
+      }
+    }
+
+    function applyDirection(element, mode) {
+      if (mode === 'rtl' || mode === 'ltr') {
+        element.dir = mode;
+      } else {
+        element.dir = 'auto';
+      }
+    }
+
+    function renderStats() {
+      const total = state.items.length;
+      const done = state.items.filter(item => item.done).length;
+      const open = total - done;
+
+      editorStats.textContent = total + ' lines';
+      previewStats.textContent = total + ' items • ' + done + ' done • ' + open + ' open';
+    }
+
+    function renderPreview() {
+      preview.innerHTML = '';
+      applyDirection(preview, state.direction);
+
+      if (state.items.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'No checklist items yet.';
+        preview.appendChild(empty);
+        renderStats();
+        return;
+      }
+
+      state.items.forEach(item => {
+        const row = document.createElement('label');
+        row.className = 'item' + (item.done ? ' done' : '');
+        applyDirection(row, state.direction);
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'checkbox';
+        checkbox.checked = item.done;
+        checkbox.addEventListener('change', () => {
+          item.done = checkbox.checked;
+          item.updatedAt = new Date().toISOString();
+          saveState();
+          renderPreview();
+        });
+
+        const text = document.createElement('div');
+        text.className = 'item-text';
+        text.textContent = item.text;
+        text.dir = 'auto';
+
+        const timestamp = document.createElement('div');
+        timestamp.className = 'timestamp';
+        timestamp.textContent = 'Updated: ' + formatTimestamp(item.updatedAt);
+
+        row.appendChild(checkbox);
+        row.appendChild(text);
+        row.appendChild(timestamp);
+        preview.appendChild(row);
+      });
+
+      renderStats();
+    }
+
+    function syncFromEditor() {
+      state.rawText = editor.value;
+      state.items = parseItems(state.rawText, state.items);
+      saveState();
+      renderPreview();
+    }
+
+    function clearChecks() {
+      const now = new Date().toISOString();
+      state.items = state.items.map(item => ({
+        ...item,
+        done: false,
+        updatedAt: item.done ? now : item.updatedAt
+      }));
+      saveState();
+      renderPreview();
+    }
+
+    function resetAll() {
+      state = {
+        rawText: '',
+        items: [],
+        direction: state.direction
+      };
+      editor.value = '';
+      saveState();
+      renderPreview();
+    }
+
+    editor.addEventListener('input', syncFromEditor);
+
+    appDirection.addEventListener('change', () => {
+      state.direction = appDirection.value;
+      applyDirection(editor, state.direction);
+      saveState();
+      renderPreview();
+    });
+
+    clearChecksBtn.addEventListener('click', clearChecks);
+    resetBtn.addEventListener('click', resetAll);
+
+    function init() {
+      loadState();
+
+      if (!state.rawText) {
+        state.rawText = 'לקנות חלב\nלקבוע פגישה\nלשלוח חשבונית\nCall supplier';
+        state.items = parseItems(state.rawText, []);
+      }
+
+      editor.value = state.rawText;
+      appDirection.value = state.direction;
+      applyDirection(editor, state.direction);
+      renderPreview();
+      saveState();
+    }
+
+    init();
+  </script>
+</body>
+</html>
