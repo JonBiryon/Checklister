@@ -6,14 +6,16 @@
   <title>Checklist App</title>
   <style>
     :root {
-      --bg: #f5f7fb;
-      --panel: #ffffff;
-      --border: #d9dfeb;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --accent: #2563eb;
-      --done: #edfdf3;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      --bg: #1b1612;
+      --panel: #2a211b;
+      --panel-2: #342821;
+      --border: #4b3a2f;
+      --text: #f2e7dc;
+      --muted: #c4ae9b;
+      --accent: #a56a3a;
+      --accent-hover: #ba7a46;
+      --done: #33281f;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
       --radius: 16px;
       --gap: 16px;
     }
@@ -25,7 +27,7 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: var(--bg);
+      background: linear-gradient(180deg, #19130f 0%, #211913 100%);
       color: var(--text);
     }
 
@@ -70,7 +72,7 @@
 
     button, select {
       border: 1px solid var(--border);
-      background: #fff;
+      background: var(--panel-2);
       color: var(--text);
       border-radius: 10px;
       padding: 10px 12px;
@@ -79,21 +81,31 @@
     }
 
     button:hover, select:hover {
-      border-color: #b8c3d9;
+      border-color: #6a503f;
+      background: #3b2d24;
     }
 
     .primary {
       background: var(--accent);
-      color: #fff;
+      color: #fff7ef;
       border-color: var(--accent);
+    }
+
+    .primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
     }
 
     .layout {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(320px, 1fr) minmax(320px, 1.4fr);
       gap: var(--gap);
       min-height: 0;
       flex: 1;
+    }
+
+    .layout.editor-hidden {
+      grid-template-columns: 1fr;
     }
 
     .panel {
@@ -107,6 +119,10 @@
       overflow: hidden;
     }
 
+    .panel.hidden {
+      display: none;
+    }
+
     .panel-header {
       padding: 14px 16px;
       border-bottom: 1px solid var(--border);
@@ -114,6 +130,7 @@
       justify-content: space-between;
       align-items: center;
       gap: 8px;
+      background: rgba(255, 255, 255, 0.02);
     }
 
     .panel-title {
@@ -146,6 +163,10 @@
       font-family: Arial, sans-serif;
     }
 
+    textarea::placeholder {
+      color: #b89f8c;
+    }
+
     .preview-wrap {
       padding: 8px 10px 14px;
       overflow: auto;
@@ -167,7 +188,7 @@
       border: 1px solid var(--border);
       border-radius: 12px;
       margin: 8px 0;
-      background: #fff;
+      background: var(--panel-2);
     }
 
     .item.done {
@@ -191,7 +212,7 @@
 
     .item.done .item-text {
       text-decoration: line-through;
-      color: #3f4b5d;
+      color: #d4bca9;
     }
 
     .timestamp {
@@ -209,12 +230,9 @@
       font-size: 13px;
     }
 
-    .dir-auto {
-      direction: auto;
-    }
-
     @media (max-width: 900px) {
-      .layout {
+      .layout,
+      .layout.editor-hidden {
         grid-template-columns: 1fr;
       }
 
@@ -247,6 +265,7 @@
         <div class="subtitle">עריכה בחלון אחד, תצוגה ותיעוד עדכון בחלון המקביל</div>
       </div>
       <div class="controls">
+        <button id="toggleEditorBtn" class="primary">Show editor</button>
         <select id="appDirection" aria-label="Direction mode">
           <option value="auto">Auto direction</option>
           <option value="rtl">RTL</option>
@@ -257,8 +276,8 @@
       </div>
     </div>
 
-    <div class="layout">
-      <section class="panel">
+    <div class="layout editor-hidden" id="layout">
+      <section class="panel hidden" id="editorPanel">
         <div class="panel-header">
           <div>
             <div class="panel-title">Editor</div>
@@ -291,6 +310,9 @@ Call supplier"></textarea>
   <script>
     const STORAGE_KEY = 'simpleChecklistApp.v1';
 
+    const layout = document.getElementById('layout');
+    const editorPanel = document.getElementById('editorPanel');
+    const toggleEditorBtn = document.getElementById('toggleEditorBtn');
     const editor = document.getElementById('editor');
     const preview = document.getElementById('preview');
     const editorStats = document.getElementById('editorStats');
@@ -302,7 +324,8 @@ Call supplier"></textarea>
     let state = {
       rawText: '',
       items: [],
-      direction: 'auto'
+      direction: 'auto',
+      showEditor: false
     };
 
     function makeId() {
@@ -357,6 +380,7 @@ Call supplier"></textarea>
         state.rawText = typeof saved.rawText === 'string' ? saved.rawText : '';
         state.items = Array.isArray(saved.items) ? saved.items : [];
         state.direction = ['auto', 'rtl', 'ltr'].includes(saved.direction) ? saved.direction : 'auto';
+        state.showEditor = typeof saved.showEditor === 'boolean' ? saved.showEditor : false;
       } catch {
       }
     }
@@ -386,6 +410,18 @@ Call supplier"></textarea>
         element.dir = mode;
       } else {
         element.dir = 'auto';
+      }
+    }
+
+    function renderLayout() {
+      if (state.showEditor) {
+        layout.classList.remove('editor-hidden');
+        editorPanel.classList.remove('hidden');
+        toggleEditorBtn.textContent = 'Hide editor';
+      } else {
+        layout.classList.add('editor-hidden');
+        editorPanel.classList.add('hidden');
+        toggleEditorBtn.textContent = 'Show editor';
       }
     }
 
@@ -483,6 +519,12 @@ Call supplier"></textarea>
       renderPreview();
     });
 
+    toggleEditorBtn.addEventListener('click', () => {
+      state.showEditor = !state.showEditor;
+      saveState();
+      renderLayout();
+    });
+
     clearChecksBtn.addEventListener('click', clearChecks);
     resetBtn.addEventListener('click', resetAll);
 
@@ -497,6 +539,7 @@ Call supplier"></textarea>
       editor.value = state.rawText;
       appDirection.value = state.direction;
       applyDirection(editor, state.direction);
+      renderLayout();
       renderPreview();
       saveState();
     }
