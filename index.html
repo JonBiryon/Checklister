@@ -3,19 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Checklist App</title>
+  <title>Checklister</title>
   <style>
     :root {
-      --bg: #1b1612;
-      --panel: #2a211b;
-      --panel-2: #342821;
-      --border: #4b3a2f;
-      --text: #f2e7dc;
-      --muted: #c4ae9b;
-      --accent: #a56a3a;
-      --accent-hover: #ba7a46;
-      --done: #33281f;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
+      --bg: #1a1410;
+      --bg-2: #231b16;
+      --panel: #2d221c;
+      --panel-2: #392b23;
+      --border: #564236;
+      --text: #f1e5d8;
+      --muted: #c4ac96;
+      --accent: #9d6a43;
+      --accent-2: #b97c4d;
+      --danger: #7b463a;
+      --done: #33271f;
+      --shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
       --radius: 16px;
       --gap: 16px;
     }
@@ -27,8 +29,15 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(180deg, #19130f 0%, #211913 100%);
       color: var(--text);
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
     }
 
     .app {
@@ -39,21 +48,26 @@
       gap: var(--gap);
     }
 
-    .topbar {
+    .topbar,
+    .panel,
+    .statusbar {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
+    }
+
+    .topbar {
       padding: 14px 16px;
       display: flex;
-      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
     .title {
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 700;
     }
 
@@ -63,73 +77,93 @@
       margin-top: 4px;
     }
 
-    .controls {
+    .controls,
+    .checklist-bar,
+    .settings-grid,
+    .dialog-actions,
+    .panel-header {
       display: flex;
-      flex-wrap: wrap;
       gap: 8px;
+      flex-wrap: wrap;
       align-items: center;
     }
 
-    button, select {
-      border: 1px solid var(--border);
+    button,
+    select,
+    input[type="text"],
+    input[type="password"] {
       background: var(--panel-2);
       color: var(--text);
+      border: 1px solid var(--border);
       border-radius: 10px;
       padding: 10px 12px;
-      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      min-width: 0;
+      width: 100%;
+    }
+
+    button {
       cursor: pointer;
     }
 
-    button:hover, select:hover {
-      border-color: #6a503f;
-      background: #3b2d24;
+    button:hover,
+    select:hover,
+    input[type="text"]:hover,
+    input[type="password"]:hover {
+      border-color: #725645;
+      background: #433229;
     }
 
-    .primary {
+    button.primary {
       background: var(--accent);
-      color: #fff7ef;
       border-color: var(--accent);
+      color: #fff6ef;
     }
 
-    .primary:hover {
-      background: var(--accent-hover);
-      border-color: var(--accent-hover);
+    button.primary:hover {
+      background: var(--accent-2);
+      border-color: var(--accent-2);
+    }
+
+    button.danger {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff3ef;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(320px, 1fr) minmax(320px, 1.4fr);
+      grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
       gap: var(--gap);
       min-height: 0;
       flex: 1;
     }
 
-    .layout.editor-hidden {
-      grid-template-columns: 1fr;
+    .sidebar,
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+      min-height: 0;
     }
 
     .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      display: flex;
-      flex-direction: column;
-      min-height: 70vh;
       overflow: hidden;
-    }
-
-    .panel.hidden {
-      display: none;
+      min-height: 0;
     }
 
     .panel-header {
+      justify-content: space-between;
       padding: 14px 16px;
       border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
       background: rgba(255, 255, 255, 0.02);
     }
 
@@ -138,45 +172,96 @@
       font-weight: 700;
     }
 
-    .panel-note {
+    .panel-note,
+    .field-note,
+    .muted,
+    .status-text {
       color: var(--muted);
       font-size: 13px;
     }
 
-    .editor-wrap {
+    .checklist-list {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: auto;
+      max-height: 42vh;
+    }
+
+    .checklist-button {
+      width: 100%;
+      text-align: start;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .checklist-button.active {
+      border-color: var(--accent-2);
+      background: #463327;
+    }
+
+    .checklist-name {
+      font-weight: 700;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    .checklist-meta {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .editor-panel.hidden {
+      display: none;
+    }
+
+    .main-stack {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+      gap: var(--gap);
+      min-height: 0;
       flex: 1;
-      padding: 0;
+    }
+
+    .main-stack.editor-hidden {
+      grid-template-columns: 1fr;
+    }
+
+    .editor-wrap,
+    .preview-wrap {
+      padding: 10px;
+      min-height: 0;
     }
 
     textarea {
       width: 100%;
+      min-height: 58vh;
       height: 100%;
-      min-height: 70vh;
+      resize: vertical;
       border: 0;
       outline: 0;
-      resize: none;
-      padding: 16px;
-      font-size: 16px;
-      line-height: 1.6;
-      background: transparent;
+      border-radius: 12px;
+      background: #241b16;
       color: var(--text);
-      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      padding: 16px;
     }
 
     textarea::placeholder {
-      color: #b89f8c;
+      color: #b59b86;
     }
 
     .preview-wrap {
-      padding: 8px 10px 14px;
       overflow: auto;
-      flex: 1;
     }
 
     .empty {
-      color: var(--muted);
       padding: 20px 12px;
-      font-size: 15px;
+      color: var(--muted);
     }
 
     .item {
@@ -187,8 +272,8 @@
       padding: 12px;
       border: 1px solid var(--border);
       border-radius: 12px;
-      margin: 8px 0;
       background: var(--panel-2);
+      margin-bottom: 8px;
     }
 
     .item.done {
@@ -196,12 +281,11 @@
     }
 
     .checkbox {
-      margin-top: 2px;
       width: 20px;
       height: 20px;
-      accent-color: var(--accent);
+      accent-color: var(--accent-2);
+      margin-top: 2px;
       cursor: pointer;
-      flex: 0 0 auto;
     }
 
     .item-text {
@@ -212,7 +296,7 @@
 
     .item.done .item-text {
       text-decoration: line-through;
-      color: #d4bca9;
+      color: #d7beaa;
     }
 
     .timestamp {
@@ -222,26 +306,90 @@
       align-self: center;
     }
 
-    .stats {
+    .statusbar {
+      padding: 12px 16px;
       display: flex;
-      gap: 12px;
+      justify-content: space-between;
+      gap: 10px;
       flex-wrap: wrap;
-      color: var(--muted);
-      font-size: 13px;
+      align-items: center;
     }
 
-    @media (max-width: 900px) {
+    .dialog-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .dialog-backdrop.show {
+      display: flex;
+    }
+
+    .dialog {
+      width: min(720px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .dialog-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .dialog-actions {
+      justify-content: flex-end;
+      padding: 0 16px 16px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 980px) {
       .layout,
-      .layout.editor-hidden {
+      .main-stack,
+      .main-stack.editor-hidden,
+      .settings-grid {
         grid-template-columns: 1fr;
       }
 
-      .panel {
-        min-height: 42vh;
+      .checklist-list {
+        max-height: none;
       }
 
       textarea {
-        min-height: 42vh;
+        min-height: 38vh;
       }
     }
 
@@ -261,71 +409,182 @@
   <div class="app">
     <div class="topbar">
       <div>
-        <div class="title">Checklist</div>
-        <div class="subtitle">עריכה בחלון אחד, תצוגה ותיעוד עדכון בחלון המקביל</div>
+        <div class="title">Checklister</div>
+        <div class="subtitle">צ'קליסטים מרובים, שמירה ידנית ל־GitHub, ותצוגה נוחה ל־RTL / LTR</div>
       </div>
       <div class="controls">
-        <button id="toggleEditorBtn" class="primary">Show editor</button>
+        <button id="toggleEditorBtn">הצג עורך</button>
         <select id="appDirection" aria-label="Direction mode">
-          <option value="auto">Auto direction</option>
+          <option value="auto">כיוון אוטומטי</option>
           <option value="rtl">RTL</option>
           <option value="ltr">LTR</option>
         </select>
-        <button id="clearChecksBtn">Clear checks</button>
-        <button id="resetBtn">Reset all</button>
+        <button id="openSettingsBtn">הגדרות GitHub</button>
+        <button id="saveBtn" class="primary">שמור שינויים</button>
       </div>
     </div>
 
-    <div class="layout editor-hidden" id="layout">
-      <section class="panel hidden" id="editorPanel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title">Editor</div>
-            <div class="panel-note">כל שורה היא פריט אחד בצ'קליסט</div>
+    <div class="layout">
+      <aside class="sidebar">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">צ'קליסטים</div>
+              <div class="panel-note">אפשר ליצור כמה רשימות שונות ולשמור את כולן בקובץ אחד ב־GitHub</div>
+            </div>
           </div>
-          <div class="stats" id="editorStats"></div>
-        </div>
-        <div class="editor-wrap">
-          <textarea id="editor" placeholder="לדוגמה:
+          <div class="panel-header checklist-bar">
+            <button id="newChecklistBtn" class="primary">חדש</button>
+            <button id="renameChecklistBtn">שנה שם</button>
+            <button id="deleteChecklistBtn" class="danger">מחק</button>
+          </div>
+          <div class="checklist-list" id="checklistList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">פעולות</div>
+              <div class="panel-note">השמירה ל־GitHub נעשית רק בלחיצה על כפתור שמירה</div>
+            </div>
+          </div>
+          <div class="panel-header checklist-bar">
+            <button id="clearChecksBtn">נקה סימונים</button>
+            <button id="reloadBtn">טען מחדש מ־GitHub</button>
+          </div>
+        </section>
+      </aside>
+
+      <main class="main">
+        <div class="main-stack editor-hidden" id="mainStack">
+          <section class="panel editor-panel hidden" id="editorPanel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">עורך</div>
+                <div class="panel-note">כל שורה היא פריט אחד</div>
+              </div>
+              <div class="muted" id="editorStats"></div>
+            </div>
+            <div class="editor-wrap">
+              <textarea id="editor" placeholder="לדוגמה:
 לקנות חלב
 לקבוע פגישה
 Send invoice
 Call supplier"></textarea>
-        </div>
-      </section>
+            </div>
+          </section>
 
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title">Preview</div>
-            <div class="panel-note">סימון פריט יעדכן את זמן העדכון האחרון של אותה שורה</div>
-          </div>
-          <div class="stats" id="previewStats"></div>
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title" id="previewTitle">תצוגה</div>
+                <div class="panel-note">סימון פריט מעדכן את זמן העדכון האחרון של אותה שורה</div>
+              </div>
+              <div class="muted" id="previewStats"></div>
+            </div>
+            <div class="preview-wrap" id="preview"></div>
+          </section>
         </div>
-        <div class="preview-wrap" id="preview"></div>
-      </section>
+
+        <div class="statusbar">
+          <div class="status-text" id="statusText">מוכן</div>
+          <div class="status-text" id="saveInfo"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="dialog-backdrop" id="settingsDialog">
+    <div class="dialog">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">הגדרות GitHub</div>
+          <div class="panel-note">שמירה ישירה ל־GitHub מהדפדפן דורשת טוקן אישי. הטוקן נשמר רק בדפדפן שלך.</div>
+        </div>
+      </div>
+      <div class="dialog-body">
+        <div class="settings-grid">
+          <div class="field">
+            <label for="ownerInput">Owner</label>
+            <input id="ownerInput" type="text" placeholder="למשל JonBiryon" />
+          </div>
+          <div class="field">
+            <label for="repoInput">Repository</label>
+            <input id="repoInput" type="text" placeholder="למשל Checklister" />
+          </div>
+          <div class="field">
+            <label for="branchInput">Branch</label>
+            <input id="branchInput" type="text" placeholder="main" />
+          </div>
+          <div class="field">
+            <label for="filePathInput">JSON path in repo</label>
+            <input id="filePathInput" type="text" placeholder="data/checklists.json" />
+          </div>
+          <div class="field full">
+            <label for="tokenInput">GitHub token</label>
+            <input id="tokenInput" type="password" placeholder="Fine-grained personal access token" />
+            <div class="field-note">הטוקן צריך הרשאת Contents: Read and write על הריפו הזה.</div>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button id="closeSettingsBtn">סגור</button>
+        <button id="saveSettingsBtn" class="primary">שמור הגדרות</button>
+      </div>
     </div>
   </div>
 
   <script>
-    const STORAGE_KEY = 'simpleChecklistApp.v1';
+    const LOCAL_STORAGE_KEY = 'checklister.local.v2';
 
-    const layout = document.getElementById('layout');
-    const editorPanel = document.getElementById('editorPanel');
     const toggleEditorBtn = document.getElementById('toggleEditorBtn');
+    const appDirection = document.getElementById('appDirection');
+    const openSettingsBtn = document.getElementById('openSettingsBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const clearChecksBtn = document.getElementById('clearChecksBtn');
+    const reloadBtn = document.getElementById('reloadBtn');
+    const newChecklistBtn = document.getElementById('newChecklistBtn');
+    const renameChecklistBtn = document.getElementById('renameChecklistBtn');
+    const deleteChecklistBtn = document.getElementById('deleteChecklistBtn');
+
+    const mainStack = document.getElementById('mainStack');
+    const editorPanel = document.getElementById('editorPanel');
     const editor = document.getElementById('editor');
     const preview = document.getElementById('preview');
+    const previewTitle = document.getElementById('previewTitle');
+    const checklistList = document.getElementById('checklistList');
     const editorStats = document.getElementById('editorStats');
     const previewStats = document.getElementById('previewStats');
-    const appDirection = document.getElementById('appDirection');
-    const clearChecksBtn = document.getElementById('clearChecksBtn');
-    const resetBtn = document.getElementById('resetBtn');
+    const statusText = document.getElementById('statusText');
+    const saveInfo = document.getElementById('saveInfo');
+
+    const settingsDialog = document.getElementById('settingsDialog');
+    const ownerInput = document.getElementById('ownerInput');
+    const repoInput = document.getElementById('repoInput');
+    const branchInput = document.getElementById('branchInput');
+    const filePathInput = document.getElementById('filePathInput');
+    const tokenInput = document.getElementById('tokenInput');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+
+    let repoFileSha = null;
 
     let state = {
-      rawText: '',
-      items: [],
       direction: 'auto',
-      showEditor: false
+      showEditor: false,
+      selectedChecklistId: null,
+      github: {
+        owner: 'JonBiryon',
+        repo: 'Checklister',
+        branch: 'main',
+        filePath: 'data/checklists.json',
+        token: ''
+      },
+      data: {
+        version: 1,
+        lastSavedAt: null,
+        checklists: []
+      }
     };
 
     function makeId() {
@@ -333,6 +592,18 @@ Call supplier"></textarea>
         return crypto.randomUUID();
       }
       return 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+    }
+
+    function createChecklist(name, rawText) {
+      const id = makeId();
+      return {
+        id,
+        name,
+        rawText,
+        items: parseItems(rawText, []),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
     }
 
     function splitLines(rawText) {
@@ -367,22 +638,12 @@ Call supplier"></textarea>
       });
     }
 
-    function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    function getSelectedChecklist() {
+      return state.data.checklists.find(item => item.id === state.selectedChecklistId) || null;
     }
 
-    function loadState() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (!saved) {
-          return;
-        }
-        state.rawText = typeof saved.rawText === 'string' ? saved.rawText : '';
-        state.items = Array.isArray(saved.items) ? saved.items : [];
-        state.direction = ['auto', 'rtl', 'ltr'].includes(saved.direction) ? saved.direction : 'auto';
-        state.showEditor = typeof saved.showEditor === 'boolean' ? saved.showEditor : false;
-      } catch {
-      }
+    function setStatus(message) {
+      statusText.textContent = message;
     }
 
     function formatTimestamp(value) {
@@ -391,7 +652,6 @@ Call supplier"></textarea>
       }
 
       try {
-        const date = new Date(value);
         return new Intl.DateTimeFormat(undefined, {
           year: 'numeric',
           month: '2-digit',
@@ -399,55 +659,105 @@ Call supplier"></textarea>
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit'
-        }).format(date);
+        }).format(new Date(value));
       } catch {
         return value;
       }
     }
 
     function applyDirection(element, mode) {
-      if (mode === 'rtl' || mode === 'ltr') {
-        element.dir = mode;
-      } else {
-        element.dir = 'auto';
+      element.dir = mode === 'rtl' || mode === 'ltr' ? mode : 'auto';
+    }
+
+    function ensureSelection() {
+      if (!state.data.checklists.length) {
+        const demo = createChecklist('רשימה ראשונה', 'לקנות חלב\nלקבוע פגישה\nלשלוח חשבונית\nCall supplier');
+        state.data.checklists = [demo];
+      }
+
+      if (!getSelectedChecklist()) {
+        state.selectedChecklistId = state.data.checklists[0].id;
       }
     }
 
     function renderLayout() {
       if (state.showEditor) {
-        layout.classList.remove('editor-hidden');
         editorPanel.classList.remove('hidden');
-        toggleEditorBtn.textContent = 'Hide editor';
+        mainStack.classList.remove('editor-hidden');
+        toggleEditorBtn.textContent = 'הסתר עורך';
       } else {
-        layout.classList.add('editor-hidden');
         editorPanel.classList.add('hidden');
-        toggleEditorBtn.textContent = 'Show editor';
+        mainStack.classList.add('editor-hidden');
+        toggleEditorBtn.textContent = 'הצג עורך';
       }
     }
 
+    function renderChecklistList() {
+      checklistList.innerHTML = '';
+
+      state.data.checklists.forEach(checklist => {
+        const button = document.createElement('button');
+        button.className = 'checklist-button' + (checklist.id === state.selectedChecklistId ? ' active' : '');
+        button.type = 'button';
+        button.addEventListener('click', () => {
+          state.selectedChecklistId = checklist.id;
+          persistLocal();
+          renderAll();
+        });
+
+        const name = document.createElement('div');
+        name.className = 'checklist-name';
+        name.textContent = checklist.name;
+        name.dir = 'auto';
+
+        const meta = document.createElement('div');
+        meta.className = 'checklist-meta';
+        meta.textContent = checklist.items.length + ' פריטים';
+
+        button.appendChild(name);
+        button.appendChild(meta);
+        checklistList.appendChild(button);
+      });
+    }
+
     function renderStats() {
-      const total = state.items.length;
-      const done = state.items.filter(item => item.done).length;
+      const checklist = getSelectedChecklist();
+      if (!checklist) {
+        editorStats.textContent = '';
+        previewStats.textContent = '';
+        previewTitle.textContent = 'תצוגה';
+        return;
+      }
+
+      const total = checklist.items.length;
+      const done = checklist.items.filter(item => item.done).length;
       const open = total - done;
 
-      editorStats.textContent = total + ' lines';
-      previewStats.textContent = total + ' items • ' + done + ' done • ' + open + ' open';
+      previewTitle.textContent = checklist.name;
+      editorStats.textContent = total + ' שורות';
+      previewStats.textContent = total + ' פריטים • ' + done + ' בוצעו • ' + open + ' פתוחים';
+    }
+
+    function renderEditor() {
+      const checklist = getSelectedChecklist();
+      editor.value = checklist ? checklist.rawText : '';
+      applyDirection(editor, state.direction);
     }
 
     function renderPreview() {
       preview.innerHTML = '';
       applyDirection(preview, state.direction);
 
-      if (state.items.length === 0) {
+      const checklist = getSelectedChecklist();
+      if (!checklist || !checklist.items.length) {
         const empty = document.createElement('div');
         empty.className = 'empty';
-        empty.textContent = 'No checklist items yet.';
+        empty.textContent = 'אין כרגע פריטים ברשימה.';
         preview.appendChild(empty);
-        renderStats();
         return;
       }
 
-      state.items.forEach(item => {
+      checklist.items.forEach(item => {
         const row = document.createElement('label');
         row.className = 'item' + (item.done ? ' done' : '');
         applyDirection(row, state.direction);
@@ -459,8 +769,10 @@ Call supplier"></textarea>
         checkbox.addEventListener('change', () => {
           item.done = checkbox.checked;
           item.updatedAt = new Date().toISOString();
-          saveState();
+          checklist.updatedAt = new Date().toISOString();
+          persistLocal();
           renderPreview();
+          renderStats();
         });
 
         const text = document.createElement('div');
@@ -470,78 +782,345 @@ Call supplier"></textarea>
 
         const timestamp = document.createElement('div');
         timestamp.className = 'timestamp';
-        timestamp.textContent = 'Updated: ' + formatTimestamp(item.updatedAt);
+        timestamp.textContent = 'עודכן: ' + formatTimestamp(item.updatedAt);
 
         row.appendChild(checkbox);
         row.appendChild(text);
         row.appendChild(timestamp);
         preview.appendChild(row);
       });
-
-      renderStats();
     }
 
-    function syncFromEditor() {
-      state.rawText = editor.value;
-      state.items = parseItems(state.rawText, state.items);
-      saveState();
+    function renderSaveInfo() {
+      if (state.data.lastSavedAt) {
+        saveInfo.textContent = 'שמירה אחרונה ל־GitHub: ' + formatTimestamp(state.data.lastSavedAt);
+      } else {
+        saveInfo.textContent = 'טרם בוצעה שמירה ל־GitHub';
+      }
+    }
+
+    function renderAll() {
+      renderLayout();
+      renderChecklistList();
+      renderEditor();
       renderPreview();
+      renderStats();
+      renderSaveInfo();
+      appDirection.value = state.direction;
+    }
+
+    function persistLocal() {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadLocal() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY));
+        if (!saved) {
+          return;
+        }
+
+        state.direction = ['auto', 'rtl', 'ltr'].includes(saved.direction) ? saved.direction : state.direction;
+        state.showEditor = typeof saved.showEditor === 'boolean' ? saved.showEditor : state.showEditor;
+        state.selectedChecklistId = saved.selectedChecklistId || state.selectedChecklistId;
+
+        if (saved.github && typeof saved.github === 'object') {
+          state.github.owner = saved.github.owner || state.github.owner;
+          state.github.repo = saved.github.repo || state.github.repo;
+          state.github.branch = saved.github.branch || state.github.branch;
+          state.github.filePath = saved.github.filePath || state.github.filePath;
+          state.github.token = saved.github.token || '';
+        }
+
+        if (saved.data && Array.isArray(saved.data.checklists)) {
+          state.data = saved.data;
+        }
+      } catch {
+      }
+    }
+
+    function syncEditorToSelectedChecklist() {
+      const checklist = getSelectedChecklist();
+      if (!checklist) {
+        return;
+      }
+
+      checklist.rawText = editor.value;
+      checklist.items = parseItems(checklist.rawText, checklist.items);
+      checklist.updatedAt = new Date().toISOString();
+      persistLocal();
+      renderPreview();
+      renderStats();
+      renderChecklistList();
+    }
+
+    function openSettings() {
+      ownerInput.value = state.github.owner;
+      repoInput.value = state.github.repo;
+      branchInput.value = state.github.branch;
+      filePathInput.value = state.github.filePath;
+      tokenInput.value = state.github.token;
+      settingsDialog.classList.add('show');
+    }
+
+    function closeSettings() {
+      settingsDialog.classList.remove('show');
+    }
+
+    function saveSettings() {
+      state.github.owner = ownerInput.value.trim();
+      state.github.repo = repoInput.value.trim();
+      state.github.branch = branchInput.value.trim() || 'main';
+      state.github.filePath = filePathInput.value.trim() || 'data/checklists.json';
+      state.github.token = tokenInput.value.trim();
+      persistLocal();
+      closeSettings();
+      setStatus('הגדרות GitHub נשמרו בדפדפן');
+    }
+
+    function encodeBase64Unicode(str) {
+      return btoa(unescape(encodeURIComponent(str)));
+    }
+
+    function decodeBase64Unicode(str) {
+      return decodeURIComponent(escape(atob(str)));
+    }
+
+    async function githubRequest(url, options = {}) {
+      const headers = {
+        Accept: 'application/vnd.github+json',
+        ...options.headers
+      };
+
+      if (state.github.token) {
+        headers.Authorization = 'Bearer ' + state.github.token;
+      }
+
+      const response = await fetch(url, {
+        ...options,
+        headers
+      });
+
+      return response;
+    }
+
+    async function loadFromGitHub() {
+      if (!state.github.owner || !state.github.repo || !state.github.branch || !state.github.filePath) {
+        setStatus('חסרות הגדרות GitHub');
+        openSettings();
+        return;
+      }
+
+      setStatus('טוען מ־GitHub...');
+      const url = 'https://api.github.com/repos/' + encodeURIComponent(state.github.owner) + '/' + encodeURIComponent(state.github.repo) + '/contents/' + state.github.filePath.split('/').map(encodeURIComponent).join('/') + '?ref=' + encodeURIComponent(state.github.branch);
+
+      try {
+        const response = await githubRequest(url);
+
+        if (response.status === 404) {
+          repoFileSha = null;
+          setStatus('קובץ ה־JSON עדיין לא קיים בריפו');
+          return;
+        }
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || 'GitHub load failed');
+        }
+
+        const payload = await response.json();
+        repoFileSha = payload.sha || null;
+        const decoded = decodeBase64Unicode(payload.content.replace(/\n/g, ''));
+        const parsed = JSON.parse(decoded);
+
+        if (!parsed || !Array.isArray(parsed.checklists)) {
+          throw new Error('Invalid checklist JSON structure');
+        }
+
+        state.data = {
+          version: parsed.version || 1,
+          lastSavedAt: parsed.lastSavedAt || null,
+          checklists: parsed.checklists
+        };
+
+        ensureSelection();
+        persistLocal();
+        renderAll();
+        setStatus('הנתונים נטענו מ־GitHub');
+      } catch (error) {
+        setStatus('שגיאת טעינה מ־GitHub');
+        console.error(error);
+      }
+    }
+
+    async function saveToGitHub() {
+      if (!state.github.token) {
+        setStatus('צריך להזין GitHub token לפני שמירה');
+        openSettings();
+        return;
+      }
+
+      if (!state.github.owner || !state.github.repo || !state.github.branch || !state.github.filePath) {
+        setStatus('חסרות הגדרות GitHub');
+        openSettings();
+        return;
+      }
+
+      setStatus('שומר ל־GitHub...');
+      saveBtn.disabled = true;
+
+      const payloadObject = {
+        version: 1,
+        lastSavedAt: new Date().toISOString(),
+        checklists: state.data.checklists
+      };
+
+      const content = JSON.stringify(payloadObject, null, 2);
+      const url = 'https://api.github.com/repos/' + encodeURIComponent(state.github.owner) + '/' + encodeURIComponent(state.github.repo) + '/contents/' + state.github.filePath.split('/').map(encodeURIComponent).join('/');
+
+      try {
+        if (repoFileSha === null) {
+          await loadFromGitHub();
+        }
+
+        const requestBody = {
+          message: 'Update checklists.json',
+          content: encodeBase64Unicode(content),
+          branch: state.github.branch
+        };
+
+        if (repoFileSha) {
+          requestBody.sha = repoFileSha;
+        }
+
+        const response = await githubRequest(url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || 'GitHub save failed');
+        }
+
+        const result = await response.json();
+        repoFileSha = result.content && result.content.sha ? result.content.sha : repoFileSha;
+        state.data.lastSavedAt = payloadObject.lastSavedAt;
+        persistLocal();
+        renderSaveInfo();
+        setStatus('השינויים נשמרו ל־GitHub');
+      } catch (error) {
+        setStatus('שגיאת שמירה ל־GitHub');
+        console.error(error);
+      } finally {
+        saveBtn.disabled = false;
+      }
+    }
+
+    function createNewChecklist() {
+      const name = prompt('שם לצ׳קליסט החדש:', 'רשימה חדשה');
+      if (!name) {
+        return;
+      }
+
+      const checklist = createChecklist(name.trim(), '');
+      state.data.checklists.push(checklist);
+      state.selectedChecklistId = checklist.id;
+      persistLocal();
+      renderAll();
+      setStatus('נוצר צ׳קליסט חדש');
+    }
+
+    function renameSelectedChecklist() {
+      const checklist = getSelectedChecklist();
+      if (!checklist) {
+        return;
+      }
+
+      const name = prompt('שם חדש לצ׳קליסט:', checklist.name);
+      if (!name) {
+        return;
+      }
+
+      checklist.name = name.trim();
+      checklist.updatedAt = new Date().toISOString();
+      persistLocal();
+      renderAll();
+      setStatus('שם הצ׳קליסט עודכן');
+    }
+
+    function deleteSelectedChecklist() {
+      const checklist = getSelectedChecklist();
+      if (!checklist) {
+        return;
+      }
+
+      if (!confirm('למחוק את הצ׳קליסט "' + checklist.name + '"?')) {
+        return;
+      }
+
+      state.data.checklists = state.data.checklists.filter(item => item.id !== checklist.id);
+      ensureSelection();
+      persistLocal();
+      renderAll();
+      setStatus('הצ׳קליסט נמחק');
     }
 
     function clearChecks() {
+      const checklist = getSelectedChecklist();
+      if (!checklist) {
+        return;
+      }
+
       const now = new Date().toISOString();
-      state.items = state.items.map(item => ({
+      checklist.items = checklist.items.map(item => ({
         ...item,
         done: false,
         updatedAt: item.done ? now : item.updatedAt
       }));
-      saveState();
-      renderPreview();
+      checklist.updatedAt = now;
+      persistLocal();
+      renderAll();
+      setStatus('הסימונים נוקו');
     }
-
-    function resetAll() {
-      state = {
-        rawText: '',
-        items: [],
-        direction: state.direction
-      };
-      editor.value = '';
-      saveState();
-      renderPreview();
-    }
-
-    editor.addEventListener('input', syncFromEditor);
-
-    appDirection.addEventListener('change', () => {
-      state.direction = appDirection.value;
-      applyDirection(editor, state.direction);
-      saveState();
-      renderPreview();
-    });
 
     toggleEditorBtn.addEventListener('click', () => {
       state.showEditor = !state.showEditor;
-      saveState();
+      persistLocal();
       renderLayout();
     });
 
+    appDirection.addEventListener('change', () => {
+      state.direction = appDirection.value;
+      persistLocal();
+      renderAll();
+    });
+
+    editor.addEventListener('input', syncEditorToSelectedChecklist);
+    openSettingsBtn.addEventListener('click', openSettings);
+    closeSettingsBtn.addEventListener('click', closeSettings);
+    saveSettingsBtn.addEventListener('click', saveSettings);
+    saveBtn.addEventListener('click', saveToGitHub);
+    reloadBtn.addEventListener('click', loadFromGitHub);
+    newChecklistBtn.addEventListener('click', createNewChecklist);
+    renameChecklistBtn.addEventListener('click', renameSelectedChecklist);
+    deleteChecklistBtn.addEventListener('click', deleteSelectedChecklist);
     clearChecksBtn.addEventListener('click', clearChecks);
-    resetBtn.addEventListener('click', resetAll);
+
+    settingsDialog.addEventListener('click', event => {
+      if (event.target === settingsDialog) {
+        closeSettings();
+      }
+    });
 
     function init() {
-      loadState();
-
-      if (!state.rawText) {
-        state.rawText = 'לקנות חלב\nלקבוע פגישה\nלשלוח חשבונית\nCall supplier';
-        state.items = parseItems(state.rawText, []);
-      }
-
-      editor.value = state.rawText;
-      appDirection.value = state.direction;
-      applyDirection(editor, state.direction);
-      renderLayout();
-      renderPreview();
-      saveState();
+      loadLocal();
+      ensureSelection();
+      renderAll();
+      setStatus('מוכן');
     }
 
     init();
