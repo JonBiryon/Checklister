@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -292,6 +292,9 @@
       font-size: 16px;
       line-height: 1.5;
       word-break: break-word;
+      unicode-bidi: isolate;
+      width: 100%;
+      text-align: inherit;
     }
 
     .item.done .item-text {
@@ -304,6 +307,18 @@
       color: var(--muted);
       white-space: nowrap;
       align-self: center;
+      text-align: inherit;
+      unicode-bidi: isolate;
+    }
+
+    .timestamp-prefix,
+    .timestamp-value {
+      unicode-bidi: isolate;
+    }
+
+    .timestamp-value-ltr {
+      direction: ltr;
+      display: inline-block;
     }
 
     .statusbar {
@@ -376,6 +391,14 @@
       display: none !important;
     }
 
+    .align-right {
+      text-align: right;
+    }
+
+    .align-left {
+      text-align: left;
+    }
+
     @media (max-width: 980px) {
       .layout,
       .main-stack,
@@ -409,18 +432,18 @@
   <div class="app">
     <div class="topbar">
       <div>
-        <div class="title">Checklister</div>
-        <div class="subtitle">צ'קליסטים מרובים, שמירה ידנית ל־GitHub, ותצוגה נוחה ל־RTL / LTR</div>
+        <div class="title" id="appTitle"></div>
+        <div class="subtitle" id="appSubtitle"></div>
       </div>
       <div class="controls">
-        <button id="toggleEditorBtn">הצג עורך</button>
-        <select id="appDirection" aria-label="Direction mode">
-          <option value="auto">כיוון אוטומטי</option>
-          <option value="rtl">RTL</option>
-          <option value="ltr">LTR</option>
+        <button id="toggleEditorBtn"></button>
+        <select id="appDirection" aria-label="Content direction mode"></select>
+        <select id="uiLanguage" aria-label="Interface language">
+          <option value="he">עברית</option>
+          <option value="en">English</option>
         </select>
-        <button id="openSettingsBtn">הגדרות GitHub</button>
-        <button id="saveBtn" class="primary">שמור שינויים</button>
+        <button id="openSettingsBtn"></button>
+        <button id="saveBtn" class="primary"></button>
       </div>
     </div>
 
@@ -429,14 +452,14 @@
         <section class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title">צ'קליסטים</div>
-              <div class="panel-note">אפשר ליצור כמה רשימות שונות ולשמור את כולן בקובץ אחד ב־GitHub</div>
+              <div class="panel-title" id="checklistsTitle"></div>
+              <div class="panel-note" id="checklistsNote"></div>
             </div>
           </div>
           <div class="panel-header checklist-bar">
-            <button id="newChecklistBtn" class="primary">חדש</button>
-            <button id="renameChecklistBtn">שנה שם</button>
-            <button id="deleteChecklistBtn" class="danger">מחק</button>
+            <button id="newChecklistBtn" class="primary"></button>
+            <button id="renameChecklistBtn"></button>
+            <button id="deleteChecklistBtn" class="danger"></button>
           </div>
           <div class="checklist-list" id="checklistList"></div>
         </section>
@@ -444,13 +467,13 @@
         <section class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title">פעולות</div>
-              <div class="panel-note">השמירה ל־GitHub נעשית רק בלחיצה על כפתור שמירה</div>
+              <div class="panel-title" id="actionsTitle"></div>
+              <div class="panel-note" id="actionsNote"></div>
             </div>
           </div>
           <div class="panel-header checklist-bar">
-            <button id="clearChecksBtn">נקה סימונים</button>
-            <button id="reloadBtn">טען מחדש מ־GitHub</button>
+            <button id="clearChecksBtn"></button>
+            <button id="reloadBtn"></button>
           </div>
         </section>
       </aside>
@@ -460,25 +483,21 @@
           <section class="panel editor-panel hidden" id="editorPanel">
             <div class="panel-header">
               <div>
-                <div class="panel-title">עורך</div>
-                <div class="panel-note">כל שורה היא פריט אחד</div>
+                <div class="panel-title" id="editorPanelTitle"></div>
+                <div class="panel-note" id="editorPanelNote"></div>
               </div>
               <div class="muted" id="editorStats"></div>
             </div>
             <div class="editor-wrap">
-              <textarea id="editor" placeholder="לדוגמה:
-לקנות חלב
-לקבוע פגישה
-Send invoice
-Call supplier"></textarea>
+              <textarea id="editor"></textarea>
             </div>
           </section>
 
           <section class="panel">
             <div class="panel-header">
               <div>
-                <div class="panel-title" id="previewTitle">תצוגה</div>
-                <div class="panel-note">סימון פריט מעדכן את זמן העדכון האחרון של אותה שורה</div>
+                <div class="panel-title" id="previewTitle"></div>
+                <div class="panel-note" id="previewPanelNote"></div>
               </div>
               <div class="muted" id="previewStats"></div>
             </div>
@@ -487,7 +506,7 @@ Call supplier"></textarea>
         </div>
 
         <div class="statusbar">
-          <div class="status-text" id="statusText">מוכן</div>
+          <div class="status-text" id="statusText"></div>
           <div class="status-text" id="saveInfo"></div>
         </div>
       </main>
@@ -498,47 +517,185 @@ Call supplier"></textarea>
     <div class="dialog">
       <div class="panel-header">
         <div>
-          <div class="panel-title">הגדרות GitHub</div>
-          <div class="panel-note">שמירה ישירה ל־GitHub מהדפדפן דורשת טוקן אישי. הטוקן נשמר רק בדפדפן שלך.</div>
+          <div class="panel-title" id="settingsTitle"></div>
+          <div class="panel-note" id="settingsNote"></div>
         </div>
       </div>
       <div class="dialog-body">
         <div class="settings-grid">
           <div class="field">
-            <label for="ownerInput">Owner</label>
-            <input id="ownerInput" type="text" placeholder="למשל JonBiryon" />
+            <label for="ownerInput" id="ownerLabel"></label>
+            <input id="ownerInput" type="text" />
           </div>
           <div class="field">
-            <label for="repoInput">Repository</label>
-            <input id="repoInput" type="text" placeholder="למשל Checklister" />
+            <label for="repoInput" id="repoLabel"></label>
+            <input id="repoInput" type="text" />
           </div>
           <div class="field">
-            <label for="branchInput">Branch</label>
-            <input id="branchInput" type="text" placeholder="main" />
+            <label for="branchInput" id="branchLabel"></label>
+            <input id="branchInput" type="text" />
           </div>
           <div class="field">
-            <label for="filePathInput">JSON path in repo</label>
-            <input id="filePathInput" type="text" placeholder="data/checklists.json" />
+            <label for="filePathInput" id="filePathLabel"></label>
+            <input id="filePathInput" type="text" />
           </div>
           <div class="field full">
-            <label for="tokenInput">GitHub token</label>
-            <input id="tokenInput" type="password" placeholder="Fine-grained personal access token" />
-            <div class="field-note">הטוקן צריך הרשאת Contents: Read and write על הריפו הזה.</div>
+            <label for="tokenInput" id="tokenLabel"></label>
+            <input id="tokenInput" type="password" />
+            <div class="field-note" id="tokenNote"></div>
           </div>
         </div>
       </div>
       <div class="dialog-actions">
-        <button id="closeSettingsBtn">סגור</button>
-        <button id="saveSettingsBtn" class="primary">שמור הגדרות</button>
+        <button id="closeSettingsBtn"></button>
+        <button id="saveSettingsBtn" class="primary"></button>
       </div>
     </div>
   </div>
 
   <script>
-    const LOCAL_STORAGE_KEY = 'checklister.local.v2';
+    const LOCAL_STORAGE_KEY = 'checklister.local.v3';
+
+    const UI_TEXT = {
+      he: {
+        appTitle: 'Checklister',
+        appSubtitle: 'צ׳קליסטים מרובים, שמירה ידנית ל־GitHub, ותצוגה נוחה ל־RTL / LTR',
+        toggleEditorShow: 'הצג עורך',
+        toggleEditorHide: 'הסתר עורך',
+        saveChanges: 'שמור שינויים',
+        githubSettings: 'הגדרות GitHub',
+        checklistsTitle: 'צ׳קליסטים',
+        checklistsNote: 'אפשר ליצור כמה רשימות שונות ולשמור את כולן בקובץ אחד ב־GitHub',
+        newChecklist: 'חדש',
+        renameChecklist: 'שנה שם',
+        deleteChecklist: 'מחק',
+        actionsTitle: 'פעולות',
+        actionsNote: 'השמירה ל־GitHub נעשית רק בלחיצה על כפתור שמירה',
+        clearChecks: 'נקה סימונים',
+        reloadFromGithub: 'טען מחדש מ־GitHub',
+        editorTitle: 'עורך',
+        editorNote: 'כל שורה היא פריט אחד',
+        previewFallbackTitle: 'תצוגה',
+        previewPanelNote: 'סימון פריט מעדכן את זמן העדכון האחרון של אותה שורה',
+        settingsTitle: 'הגדרות GitHub',
+        settingsNote: 'שמירה ישירה ל־GitHub מהדפדפן דורשת טוקן אישי. הטוקן נשמר רק בדפדפן שלך.',
+        owner: 'Owner',
+        repository: 'Repository',
+        branch: 'Branch',
+        filePath: 'נתיב קובץ JSON בריפו',
+        token: 'GitHub token',
+        tokenNote: 'הטוקן צריך הרשאת Contents: Read and write על הריפו הזה.',
+        close: 'סגור',
+        saveSettings: 'שמור הגדרות',
+        directionAuto: 'כיוון אוטומטי',
+        directionRtl: 'RTL',
+        directionLtr: 'LTR',
+        editorPlaceholder: 'לדוגמה:\nלקנות חלב\nלקבוע פגישה\nSend invoice\nCall supplier',
+        emptyChecklistItems: 'אין כרגע פריטים ברשימה.',
+        emptyChecklistList: 'אין כרגע צ׳קליסטים.',
+        notSelected: 'אין רשימה נבחרת.',
+        neverUpdated: 'טרם עודכן',
+        updatedPrefix: 'עודכן:',
+        lastSavedPrefix: 'שמירה אחרונה ל־GitHub:',
+        neverSaved: 'טרם בוצעה שמירה ל־GitHub',
+        lines: 'שורות',
+        itemsLabel: 'פריטים',
+        doneLabel: 'בוצעו',
+        openLabel: 'פתוחים',
+        itemCountSuffix: 'פריטים',
+        ready: 'מוכן',
+        loaded: 'הנתונים נטענו מ־GitHub',
+        loadError: 'שגיאת טעינה מ־GitHub',
+        saving: 'שומר ל־GitHub...',
+        saved: 'השינויים נשמרו ל־GitHub',
+        saveError: 'שגיאת שמירה ל־GitHub',
+        missingSettings: 'חסרות הגדרות GitHub',
+        missingToken: 'צריך להזין GitHub token לפני שמירה',
+        fileMissing: 'קובץ ה־JSON עדיין לא קיים בריפו',
+        createdChecklist: 'נוצר צ׳קליסט חדש',
+        renamedChecklist: 'שם הצ׳קליסט עודכן',
+        deletedChecklist: 'הצ׳קליסט נמחק',
+        clearedChecks: 'הסימונים נוקו',
+        settingsSaved: 'הגדרות GitHub נשמרו בדפדפן',
+        newChecklistPrompt: 'שם לצ׳קליסט החדש:',
+        newChecklistDefault: 'רשימה חדשה',
+        renameChecklistPrompt: 'שם חדש לצ׳קליסט:',
+        deleteChecklistConfirm: 'למחוק את הצ׳קליסט "{name}"?',
+        loading: 'טוען מ־GitHub...',
+        firstChecklistName: 'רשימה ראשונה'
+      },
+      en: {
+        appTitle: 'Checklister',
+        appSubtitle: 'Multiple checklists, manual GitHub saving, and comfortable RTL / LTR display',
+        toggleEditorShow: 'Show editor',
+        toggleEditorHide: 'Hide editor',
+        saveChanges: 'Save changes',
+        githubSettings: 'GitHub settings',
+        checklistsTitle: 'Checklists',
+        checklistsNote: 'You can create multiple lists and save them all into one file on GitHub',
+        newChecklist: 'New',
+        renameChecklist: 'Rename',
+        deleteChecklist: 'Delete',
+        actionsTitle: 'Actions',
+        actionsNote: 'Saving to GitHub happens only when you click the save button',
+        clearChecks: 'Clear checks',
+        reloadFromGithub: 'Reload from GitHub',
+        editorTitle: 'Editor',
+        editorNote: 'Each line is one item',
+        previewFallbackTitle: 'Preview',
+        previewPanelNote: 'Checking an item updates its last-update timestamp',
+        settingsTitle: 'GitHub settings',
+        settingsNote: 'Direct saving to GitHub from the browser requires a personal token. The token is stored only in your browser.',
+        owner: 'Owner',
+        repository: 'Repository',
+        branch: 'Branch',
+        filePath: 'JSON file path in repo',
+        token: 'GitHub token',
+        tokenNote: 'The token needs Contents: Read and write permission for this repo.',
+        close: 'Close',
+        saveSettings: 'Save settings',
+        directionAuto: 'Auto direction',
+        directionRtl: 'RTL',
+        directionLtr: 'LTR',
+        editorPlaceholder: 'For example:\nBuy milk\nSchedule meeting\nSend invoice\nCall supplier',
+        emptyChecklistItems: 'There are no items in this checklist yet.',
+        emptyChecklistList: 'There are no checklists yet.',
+        notSelected: 'No checklist selected.',
+        neverUpdated: 'Not updated yet',
+        updatedPrefix: 'Updated:',
+        lastSavedPrefix: 'Last saved to GitHub:',
+        neverSaved: 'Not yet saved to GitHub',
+        lines: 'lines',
+        itemsLabel: 'items',
+        doneLabel: 'done',
+        openLabel: 'open',
+        itemCountSuffix: 'items',
+        ready: 'Ready',
+        loaded: 'Data loaded from GitHub',
+        loadError: 'GitHub load error',
+        saving: 'Saving to GitHub...',
+        saved: 'Changes saved to GitHub',
+        saveError: 'GitHub save error',
+        missingSettings: 'GitHub settings are missing',
+        missingToken: 'A GitHub token is required before saving',
+        fileMissing: 'The JSON file does not exist in the repo yet',
+        createdChecklist: 'A new checklist was created',
+        renamedChecklist: 'Checklist name updated',
+        deletedChecklist: 'Checklist deleted',
+        clearedChecks: 'Checks cleared',
+        settingsSaved: 'GitHub settings were saved in the browser',
+        newChecklistPrompt: 'Name for the new checklist:',
+        newChecklistDefault: 'New checklist',
+        renameChecklistPrompt: 'New name for the checklist:',
+        deleteChecklistConfirm: 'Delete the checklist "{name}"?',
+        loading: 'Loading from GitHub...',
+        firstChecklistName: 'First checklist'
+      }
+    };
 
     const toggleEditorBtn = document.getElementById('toggleEditorBtn');
     const appDirection = document.getElementById('appDirection');
+    const uiLanguage = document.getElementById('uiLanguage');
     const openSettingsBtn = document.getElementById('openSettingsBtn');
     const saveBtn = document.getElementById('saveBtn');
     const clearChecksBtn = document.getElementById('clearChecksBtn');
@@ -572,6 +729,7 @@ Call supplier"></textarea>
     let state = {
       direction: 'auto',
       showEditor: false,
+      uiLanguage: 'he',
       selectedChecklistId: null,
       github: {
         owner: 'JonBiryon',
@@ -586,6 +744,15 @@ Call supplier"></textarea>
         checklists: []
       }
     };
+
+    function t(key, vars = {}) {
+      const lang = UI_TEXT[state.uiLanguage] || UI_TEXT.he;
+      let value = lang[key] ?? UI_TEXT.he[key] ?? key;
+      Object.keys(vars).forEach(name => {
+        value = value.replaceAll(`{${name}}`, vars[name]);
+      });
+      return value;
+    }
 
     function makeId() {
       if (window.crypto && crypto.randomUUID) {
@@ -648,11 +815,11 @@ Call supplier"></textarea>
 
     function formatTimestamp(value) {
       if (!value) {
-        return 'טרם עודכן';
+        return t('neverUpdated');
       }
 
       try {
-        return new Intl.DateTimeFormat(undefined, {
+        return new Intl.DateTimeFormat(state.uiLanguage === 'he' ? 'he-IL' : 'en-US', {
           year: 'numeric',
           month: '2-digit',
           day: '2-digit',
@@ -665,13 +832,65 @@ Call supplier"></textarea>
       }
     }
 
+    function getFirstStrongDirection(text) {
+      for (const char of text || '') {
+        if (/[A-Za-z]/.test(char)) {
+          return 'ltr';
+        }
+        if (/[֐-ࣿ]/.test(char)) {
+          return 'rtl';
+        }
+      }
+      return state.uiLanguage === 'he' ? 'rtl' : 'ltr';
+    }
+
+    function getItemDirection(text) {
+      return state.direction === 'auto' ? getFirstStrongDirection(text) : state.direction;
+    }
+
     function applyDirection(element, mode) {
       element.dir = mode === 'rtl' || mode === 'ltr' ? mode : 'auto';
     }
 
+    function applyTextDirection(element, text, fallback = 'auto') {
+      const resolved = fallback === 'auto' ? getFirstStrongDirection(text) : fallback;
+      element.dir = resolved;
+      element.classList.toggle('align-right', resolved === 'rtl');
+      element.classList.toggle('align-left', resolved === 'ltr');
+      element.style.textAlign = resolved === 'rtl' ? 'right' : 'left';
+      return resolved;
+    }
+
+    function renderTimestamp(container, value, rowDirection) {
+      container.innerHTML = '';
+      container.dir = rowDirection;
+      container.classList.toggle('align-right', rowDirection === 'rtl');
+      container.classList.toggle('align-left', rowDirection === 'ltr');
+      container.style.textAlign = rowDirection === 'rtl' ? 'right' : 'left';
+
+      const prefix = document.createElement('span');
+      prefix.className = 'timestamp-prefix';
+      prefix.textContent = t('updatedPrefix') + ' ';
+      prefix.dir = rowDirection;
+
+      const valueSpan = document.createElement('span');
+      valueSpan.className = 'timestamp-value';
+
+      if (value) {
+        valueSpan.classList.add('timestamp-value-ltr');
+        valueSpan.textContent = formatTimestamp(value);
+      } else {
+        valueSpan.textContent = t('neverUpdated');
+        valueSpan.dir = rowDirection;
+      }
+
+      container.appendChild(prefix);
+      container.appendChild(valueSpan);
+    }
+
     function ensureSelection() {
       if (!state.data.checklists.length) {
-        const demo = createChecklist('רשימה ראשונה', 'לקנות חלב\nלקבוע פגישה\nלשלוח חשבונית\nCall supplier');
+        const demo = createChecklist(t('firstChecklistName'), state.uiLanguage === 'he' ? 'לקנות חלב\nלקבוע פגישה\nלשלוח חשבונית\nCall supplier' : 'Buy milk\nSchedule meeting\nSend invoice\nCall supplier');
         state.data.checklists = [demo];
       }
 
@@ -680,15 +899,78 @@ Call supplier"></textarea>
       }
     }
 
+    function renderUiText() {
+      document.documentElement.lang = state.uiLanguage;
+      document.documentElement.dir = state.uiLanguage === 'he' ? 'rtl' : 'ltr';
+      uiLanguage.innerHTML = '';
+      [
+        { value: 'he', label: state.uiLanguage === 'he' ? 'עברית' : 'Hebrew' },
+        { value: 'en', label: state.uiLanguage === 'he' ? 'אנגלית' : 'English' }
+      ].forEach(optionData => {
+        const option = document.createElement('option');
+        option.value = optionData.value;
+        option.textContent = optionData.label;
+        uiLanguage.appendChild(option);
+      });
+      uiLanguage.value = state.uiLanguage;
+
+      document.getElementById('appTitle').textContent = t('appTitle');
+      document.getElementById('appSubtitle').textContent = t('appSubtitle');
+      document.getElementById('checklistsTitle').textContent = t('checklistsTitle');
+      document.getElementById('checklistsNote').textContent = t('checklistsNote');
+      document.getElementById('actionsTitle').textContent = t('actionsTitle');
+      document.getElementById('actionsNote').textContent = t('actionsNote');
+      document.getElementById('editorPanelTitle').textContent = t('editorTitle');
+      document.getElementById('editorPanelNote').textContent = t('editorNote');
+      document.getElementById('previewPanelNote').textContent = t('previewPanelNote');
+      document.getElementById('settingsTitle').textContent = t('settingsTitle');
+      document.getElementById('settingsNote').textContent = t('settingsNote');
+      document.getElementById('ownerLabel').textContent = t('owner');
+      document.getElementById('repoLabel').textContent = t('repository');
+      document.getElementById('branchLabel').textContent = t('branch');
+      document.getElementById('filePathLabel').textContent = t('filePath');
+      document.getElementById('tokenLabel').textContent = t('token');
+      document.getElementById('tokenNote').textContent = t('tokenNote');
+      newChecklistBtn.textContent = t('newChecklist');
+      renameChecklistBtn.textContent = t('renameChecklist');
+      deleteChecklistBtn.textContent = t('deleteChecklist');
+      clearChecksBtn.textContent = t('clearChecks');
+      reloadBtn.textContent = t('reloadFromGithub');
+      openSettingsBtn.textContent = t('githubSettings');
+      saveBtn.textContent = t('saveChanges');
+      closeSettingsBtn.textContent = t('close');
+      saveSettingsBtn.textContent = t('saveSettings');
+      toggleEditorBtn.textContent = state.showEditor ? t('toggleEditorHide') : t('toggleEditorShow');
+      editor.placeholder = t('editorPlaceholder');
+      ownerInput.placeholder = state.uiLanguage === 'he' ? 'למשל JonBiryon' : 'e.g. JonBiryon';
+      repoInput.placeholder = state.uiLanguage === 'he' ? 'למשל Checklister' : 'e.g. Checklister';
+      branchInput.placeholder = 'main';
+      filePathInput.placeholder = 'data/checklists.json';
+      tokenInput.placeholder = state.uiLanguage === 'he' ? 'Fine-grained personal access token' : 'Fine-grained personal access token';
+
+      appDirection.innerHTML = '';
+      [
+        { value: 'auto', label: t('directionAuto') },
+        { value: 'rtl', label: t('directionRtl') },
+        { value: 'ltr', label: t('directionLtr') }
+      ].forEach(optionData => {
+        const option = document.createElement('option');
+        option.value = optionData.value;
+        option.textContent = optionData.label;
+        appDirection.appendChild(option);
+      });
+      appDirection.value = state.direction;
+    }
+
     function renderLayout() {
       if (state.showEditor) {
         editorPanel.classList.remove('hidden');
         mainStack.classList.remove('editor-hidden');
-        toggleEditorBtn.textContent = 'הסתר עורך';
+        toggleEditorBtn.textContent = t('toggleEditorHide');
       } else {
         editorPanel.classList.add('hidden');
         mainStack.classList.add('editor-hidden');
-        toggleEditorBtn.textContent = 'הצג עורך';
+        toggleEditorBtn.textContent = t('toggleEditorShow');
       }
     }
 
@@ -708,16 +990,25 @@ Call supplier"></textarea>
         const name = document.createElement('div');
         name.className = 'checklist-name';
         name.textContent = checklist.name;
-        name.dir = 'auto';
+        applyTextDirection(name, checklist.name);
+        applyTextDirection(button, checklist.name);
 
         const meta = document.createElement('div');
         meta.className = 'checklist-meta';
-        meta.textContent = checklist.items.length + ' פריטים';
+        meta.textContent = checklist.items.length + ' ' + t('itemCountSuffix');
+        applyTextDirection(meta, checklist.name);
 
         button.appendChild(name);
         button.appendChild(meta);
         checklistList.appendChild(button);
       });
+
+      if (!state.data.checklists.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = t('emptyChecklistList');
+        checklistList.appendChild(empty);
+      }
     }
 
     function renderStats() {
@@ -725,7 +1016,7 @@ Call supplier"></textarea>
       if (!checklist) {
         editorStats.textContent = '';
         previewStats.textContent = '';
-        previewTitle.textContent = 'תצוגה';
+        previewTitle.textContent = t('previewFallbackTitle');
         return;
       }
 
@@ -734,25 +1025,30 @@ Call supplier"></textarea>
       const open = total - done;
 
       previewTitle.textContent = checklist.name;
-      editorStats.textContent = total + ' שורות';
-      previewStats.textContent = total + ' פריטים • ' + done + ' בוצעו • ' + open + ' פתוחים';
+      applyTextDirection(previewTitle, checklist.name);
+      editorStats.textContent = total + ' ' + t('lines');
+      previewStats.textContent = total + ' ' + t('itemsLabel') + ' • ' + done + ' ' + t('doneLabel') + ' • ' + open + ' ' + t('openLabel');
     }
 
     function renderEditor() {
       const checklist = getSelectedChecklist();
       editor.value = checklist ? checklist.rawText : '';
-      applyDirection(editor, state.direction);
+      const editorMode = checklist ? getItemDirection(editor.value) : (state.uiLanguage === 'he' ? 'rtl' : 'ltr');
+      applyDirection(editor, editorMode);
+      editor.classList.toggle('align-right', editorMode === 'rtl');
+      editor.classList.toggle('align-left', editorMode === 'ltr');
+      editor.style.textAlign = editorMode === 'rtl' ? 'right' : 'left';
     }
 
     function renderPreview() {
       preview.innerHTML = '';
-      applyDirection(preview, state.direction);
+      applyDirection(preview, state.uiLanguage === 'he' ? 'rtl' : 'ltr');
 
       const checklist = getSelectedChecklist();
       if (!checklist || !checklist.items.length) {
         const empty = document.createElement('div');
         empty.className = 'empty';
-        empty.textContent = 'אין כרגע פריטים ברשימה.';
+        empty.textContent = checklist ? t('emptyChecklistItems') : t('notSelected');
         preview.appendChild(empty);
         return;
       }
@@ -760,7 +1056,8 @@ Call supplier"></textarea>
       checklist.items.forEach(item => {
         const row = document.createElement('label');
         row.className = 'item' + (item.done ? ' done' : '');
-        applyDirection(row, state.direction);
+        const rowDirection = getItemDirection(item.text);
+        applyDirection(row, rowDirection);
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -778,11 +1075,11 @@ Call supplier"></textarea>
         const text = document.createElement('div');
         text.className = 'item-text';
         text.textContent = item.text;
-        text.dir = 'auto';
+        applyTextDirection(text, item.text, rowDirection);
 
         const timestamp = document.createElement('div');
         timestamp.className = 'timestamp';
-        timestamp.textContent = 'עודכן: ' + formatTimestamp(item.updatedAt);
+        renderTimestamp(timestamp, item.updatedAt, rowDirection);
 
         row.appendChild(checkbox);
         row.appendChild(text);
@@ -793,20 +1090,20 @@ Call supplier"></textarea>
 
     function renderSaveInfo() {
       if (state.data.lastSavedAt) {
-        saveInfo.textContent = 'שמירה אחרונה ל־GitHub: ' + formatTimestamp(state.data.lastSavedAt);
+        saveInfo.textContent = t('lastSavedPrefix') + ' ' + formatTimestamp(state.data.lastSavedAt);
       } else {
-        saveInfo.textContent = 'טרם בוצעה שמירה ל־GitHub';
+        saveInfo.textContent = t('neverSaved');
       }
     }
 
     function renderAll() {
+      renderUiText();
       renderLayout();
       renderChecklistList();
       renderEditor();
       renderPreview();
       renderStats();
       renderSaveInfo();
-      appDirection.value = state.direction;
     }
 
     function persistLocal() {
@@ -822,6 +1119,7 @@ Call supplier"></textarea>
 
         state.direction = ['auto', 'rtl', 'ltr'].includes(saved.direction) ? saved.direction : state.direction;
         state.showEditor = typeof saved.showEditor === 'boolean' ? saved.showEditor : state.showEditor;
+        state.uiLanguage = ['he', 'en'].includes(saved.uiLanguage) ? saved.uiLanguage : state.uiLanguage;
         state.selectedChecklistId = saved.selectedChecklistId || state.selectedChecklistId;
 
         if (saved.github && typeof saved.github === 'object') {
@@ -849,6 +1147,7 @@ Call supplier"></textarea>
       checklist.items = parseItems(checklist.rawText, checklist.items);
       checklist.updatedAt = new Date().toISOString();
       persistLocal();
+      renderEditor();
       renderPreview();
       renderStats();
       renderChecklistList();
@@ -875,7 +1174,7 @@ Call supplier"></textarea>
       state.github.token = tokenInput.value.trim();
       persistLocal();
       closeSettings();
-      setStatus('הגדרות GitHub נשמרו בדפדפן');
+      setStatus(t('settingsSaved'));
     }
 
     function encodeBase64Unicode(str) {
@@ -906,12 +1205,12 @@ Call supplier"></textarea>
 
     async function loadFromGitHub() {
       if (!state.github.owner || !state.github.repo || !state.github.branch || !state.github.filePath) {
-        setStatus('חסרות הגדרות GitHub');
+        setStatus(t('missingSettings'));
         openSettings();
         return;
       }
 
-      setStatus('טוען מ־GitHub...');
+      setStatus(t('loading'));
       const url = 'https://api.github.com/repos/' + encodeURIComponent(state.github.owner) + '/' + encodeURIComponent(state.github.repo) + '/contents/' + state.github.filePath.split('/').map(encodeURIComponent).join('/') + '?ref=' + encodeURIComponent(state.github.branch);
 
       try {
@@ -919,7 +1218,7 @@ Call supplier"></textarea>
 
         if (response.status === 404) {
           repoFileSha = null;
-          setStatus('קובץ ה־JSON עדיין לא קיים בריפו');
+          setStatus(t('fileMissing'));
           return;
         }
 
@@ -946,27 +1245,27 @@ Call supplier"></textarea>
         ensureSelection();
         persistLocal();
         renderAll();
-        setStatus('הנתונים נטענו מ־GitHub');
+        setStatus(t('loaded'));
       } catch (error) {
-        setStatus('שגיאת טעינה מ־GitHub');
+        setStatus(t('loadError'));
         console.error(error);
       }
     }
 
     async function saveToGitHub() {
       if (!state.github.token) {
-        setStatus('צריך להזין GitHub token לפני שמירה');
+        setStatus(t('missingToken'));
         openSettings();
         return;
       }
 
       if (!state.github.owner || !state.github.repo || !state.github.branch || !state.github.filePath) {
-        setStatus('חסרות הגדרות GitHub');
+        setStatus(t('missingSettings'));
         openSettings();
         return;
       }
 
-      setStatus('שומר ל־GitHub...');
+      setStatus(t('saving'));
       saveBtn.disabled = true;
 
       const payloadObject = {
@@ -1011,9 +1310,9 @@ Call supplier"></textarea>
         state.data.lastSavedAt = payloadObject.lastSavedAt;
         persistLocal();
         renderSaveInfo();
-        setStatus('השינויים נשמרו ל־GitHub');
+        setStatus(t('saved'));
       } catch (error) {
-        setStatus('שגיאת שמירה ל־GitHub');
+        setStatus(t('saveError'));
         console.error(error);
       } finally {
         saveBtn.disabled = false;
@@ -1021,7 +1320,7 @@ Call supplier"></textarea>
     }
 
     function createNewChecklist() {
-      const name = prompt('שם לצ׳קליסט החדש:', 'רשימה חדשה');
+      const name = prompt(t('newChecklistPrompt'), t('newChecklistDefault'));
       if (!name) {
         return;
       }
@@ -1031,7 +1330,7 @@ Call supplier"></textarea>
       state.selectedChecklistId = checklist.id;
       persistLocal();
       renderAll();
-      setStatus('נוצר צ׳קליסט חדש');
+      setStatus(t('createdChecklist'));
     }
 
     function renameSelectedChecklist() {
@@ -1040,7 +1339,7 @@ Call supplier"></textarea>
         return;
       }
 
-      const name = prompt('שם חדש לצ׳קליסט:', checklist.name);
+      const name = prompt(t('renameChecklistPrompt'), checklist.name);
       if (!name) {
         return;
       }
@@ -1049,7 +1348,7 @@ Call supplier"></textarea>
       checklist.updatedAt = new Date().toISOString();
       persistLocal();
       renderAll();
-      setStatus('שם הצ׳קליסט עודכן');
+      setStatus(t('renamedChecklist'));
     }
 
     function deleteSelectedChecklist() {
@@ -1058,7 +1357,7 @@ Call supplier"></textarea>
         return;
       }
 
-      if (!confirm('למחוק את הצ׳קליסט "' + checklist.name + '"?')) {
+      if (!confirm(t('deleteChecklistConfirm', { name: checklist.name }))) {
         return;
       }
 
@@ -1066,7 +1365,7 @@ Call supplier"></textarea>
       ensureSelection();
       persistLocal();
       renderAll();
-      setStatus('הצ׳קליסט נמחק');
+      setStatus(t('deletedChecklist'));
     }
 
     function clearChecks() {
@@ -1084,7 +1383,7 @@ Call supplier"></textarea>
       checklist.updatedAt = now;
       persistLocal();
       renderAll();
-      setStatus('הסימונים נוקו');
+      setStatus(t('clearedChecks'));
     }
 
     toggleEditorBtn.addEventListener('click', () => {
@@ -1097,6 +1396,13 @@ Call supplier"></textarea>
       state.direction = appDirection.value;
       persistLocal();
       renderAll();
+    });
+
+    uiLanguage.addEventListener('change', () => {
+      state.uiLanguage = uiLanguage.value;
+      persistLocal();
+      renderAll();
+      setStatus(t('ready'));
     });
 
     editor.addEventListener('input', syncEditorToSelectedChecklist);
@@ -1120,7 +1426,7 @@ Call supplier"></textarea>
       loadLocal();
       ensureSelection();
       renderAll();
-      setStatus('מוכן');
+      setStatus(t('ready'));
     }
 
     init();
